@@ -116,7 +116,10 @@ bool Project::init(void){
 }
 
 bool Project::getNext(ResultTable& ParentTempResult){
-
+    ChildOperator->getNext(TempResult);
+    for(int i = 0; i < ProjectNumber; i++){
+        ParentTempResult.writeRC()
+    }
 }
 
 bool Project::isEnd(void){
