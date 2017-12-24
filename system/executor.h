@@ -163,11 +163,85 @@ class Operator {
 
 /** definition of class Scan Operator. */
 class Scan : public Operator{
+	private:
+        char * TableName;             /**< table name to scan                       */
+	    int TempResultCols;           /**< col number of TempResult                 */
+	    Table * ScanTable;            /**< table pointer to table to scan           */
+	    int ScanCounter = 0;          /**< scan counter                             */
+	    char buffer[64];              /**< buffer to put temp result                */
+    
+    public:
+        /** constrcut method of class Project. */
+        Project(char * TableName,int TempResultCols){
+        	this->TableName = TableName;
+        	this->TempResultCols = TempResultCols;
+        };
+
+        /**
+        * init the Operator. Allocate memory and init its child
+        * @retval > 0 init success
+        * @retval < 0 init failed
+        */
+        bool init();
+
+        /**
+        * get the Next Result of the Operator.
+        * @result parent's TempResult table
+        * @retval > 0 getNext success
+        * @retval < 0 getNext failed
+        */
+        bool getNext(ResultTable& ParentTempResult);
+
+        /**
+        * free the memory and finish the Operator.
+        * @retval > 0 isEnd success
+        * @retval < 0 isEnd failed
+        */
+        bool isEnd();
 
 };
 
 /** definition of class Filter Operator. */
 class Filter : public Operator {
+	    private:
+        int ProjectNumber;            /**< total number of cols to project          */
+        int * ProjectCol;             /**< id of cols to be projected               */
+        Operator * ChildOperator;     /**< the child operator of this operator      */
+        ResultTable TempResult;       /**< a temporary table to store middle result */
+        int TempResultCols;           /**< col number of TempResult                 */
+        BasicType ** TempResultType;  /**< datatype of TempResult                   */
+    public:
+        /** constrcut method of class Project. */
+        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+                int TempResultCols,BasicType ** TempResultType){
+            this->ProjectNumber = ProjectNumber;
+            this->ProjectCol = ProjectCol;
+            this->ChildOperator = ChildOperator;
+            this->TempResultCols = TempResultCols;
+            this->TempResultType = TempResultType;
+        };
+
+        /**
+        * init the Operator. Allocate memory and init its child
+        * @retval > 0 init success
+        * @retval < 0 init failed
+        */
+        bool init();
+
+        /**
+        * get the Next Result of the Operator.
+        * @result parent's TempResult table
+        * @retval > 0 getNext success
+        * @retval < 0 getNext failed
+        */
+        bool getNext(ResultTable& ParentTempResult);
+
+        /**
+        * free the memory and finish the Operator.
+        * @retval > 0 isEnd success
+        * @retval < 0 isEnd failed
+        */
+        bool isEnd();
 
 };
 
@@ -192,14 +266,14 @@ class Project : public Operator{
         };
 
         /**
-        * init the Project Operator. Allocate memory and init its child
+        * init the Operator. Allocate memory and init its child
         * @retval > 0 init success
         * @retval < 0 init failed
         */
         bool init();
 
         /**
-        * get the Next Result of Project Operator.
+        * get the Next Result of the Operator.
         * @result parent's TempResult table
         * @retval > 0 getNext success
         * @retval < 0 getNext failed
@@ -216,16 +290,132 @@ class Project : public Operator{
 
 /** definetion of class Join Operator. */
 class Join : public Operator {
+	    private:
+        int ProjectNumber;            /**< total number of cols to project          */
+        int * ProjectCol;             /**< id of cols to be projected               */
+        Operator * ChildOperator;     /**< the child operator of this operator      */
+        ResultTable TempResult;       /**< a temporary table to store middle result */
+        int TempResultCols;           /**< col number of TempResult                 */
+        BasicType ** TempResultType;  /**< datatype of TempResult                   */
+    public:
+        /** constrcut method of class Project. */
+        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+                int TempResultCols,BasicType ** TempResultType){
+            this->ProjectNumber = ProjectNumber;
+            this->ProjectCol = ProjectCol;
+            this->ChildOperator = ChildOperator;
+            this->TempResultCols = TempResultCols;
+            this->TempResultType = TempResultType;
+        };
+
+        /**
+        * init the Operator. Allocate memory and init its child
+        * @retval > 0 init success
+        * @retval < 0 init failed
+        */
+        bool init();
+
+        /**
+        * get the Next Result of the Operator.
+        * @result parent's TempResult table
+        * @retval > 0 getNext success
+        * @retval < 0 getNext failed
+        */
+        bool getNext(ResultTable& ParentTempResult);
+
+        /**
+        * free the memory and finish the Operator.
+        * @retval > 0 isEnd success
+        * @retval < 0 isEnd failed
+        */
+        bool isEnd();
 
 };
 
 /** definition of class GroupBy Operator. */
 class GroupBy : public Operator {
+	    private:
+        int ProjectNumber;            /**< total number of cols to project          */
+        int * ProjectCol;             /**< id of cols to be projected               */
+        Operator * ChildOperator;     /**< the child operator of this operator      */
+        ResultTable TempResult;       /**< a temporary table to store middle result */
+        int TempResultCols;           /**< col number of TempResult                 */
+        BasicType ** TempResultType;  /**< datatype of TempResult                   */
+    public:
+        /** constrcut method of class Project. */
+        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+                int TempResultCols,BasicType ** TempResultType){
+            this->ProjectNumber = ProjectNumber;
+            this->ProjectCol = ProjectCol;
+            this->ChildOperator = ChildOperator;
+            this->TempResultCols = TempResultCols;
+            this->TempResultType = TempResultType;
+        };
+
+        /**
+        * init the Operator. Allocate memory and init its child
+        * @retval > 0 init success
+        * @retval < 0 init failed
+        */
+        bool init();
+
+        /**
+        * get the Next Result of the Operator.
+        * @result parent's TempResult table
+        * @retval > 0 getNext success
+        * @retval < 0 getNext failed
+        */
+        bool getNext(ResultTable& ParentTempResult);
+
+        /**
+        * free the memory and finish the Operator.
+        * @retval > 0 isEnd success
+        * @retval < 0 isEnd failed
+        */
+        bool isEnd();
 
 };
 
 /** definition of class OrderBy Operator. */
 class OrderBy : public Operator{
+    private:
+        int ProjectNumber;            /**< total number of cols to project          */
+        int * ProjectCol;             /**< id of cols to be projected               */
+        Operator * ChildOperator;     /**< the child operator of this operator      */
+        ResultTable TempResult;       /**< a temporary table to store middle result */
+        int TempResultCols;           /**< col number of TempResult                 */
+        BasicType ** TempResultType;  /**< datatype of TempResult                   */
+    public:
+        /** constrcut method of class Project. */
+        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+                int TempResultCols,BasicType ** TempResultType){
+            this->ProjectNumber = ProjectNumber;
+            this->ProjectCol = ProjectCol;
+            this->ChildOperator = ChildOperator;
+            this->TempResultCols = TempResultCols;
+            this->TempResultType = TempResultType;
+        };
 
+        /**
+        * init the Operator. Allocate memory and init its child
+        * @retval > 0 init success
+        * @retval < 0 init failed
+        */
+        bool init();
+
+        /**
+        * get the Next Result of the Operator.
+        * @result parent's TempResult table
+        * @retval > 0 getNext success
+        * @retval < 0 getNext failed
+        */
+        bool getNext(ResultTable& ParentTempResult);
+
+        /**
+        * free the memory and finish the Operator.
+        * @retval > 0 isEnd success
+        * @retval < 0 isEnd failed
+        */
+        bool isEnd();
 };
 #endif

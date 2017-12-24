@@ -106,6 +106,36 @@ int ResultTable::shut (void) {
 }
 
 //---------------------operators implementation---------------------------
+
+/*******************************Scan*************************************/
+bool Scan::init(void){
+    //get the table
+    ScanTable = (Table *)getObjByName(TableName);
+    if(ScanTable == NULL)
+        return false;
+    return true;
+}
+
+bool Scan::getNext(ResultTable& ParentTempResult){
+    //get next tuple from the table
+    for(int i = 0; i < TempResultCols; i++){
+        if(ScanTable.selectCol(ScanCounter,i,buffer) != true)
+            return false;
+        else
+           ParentTempResult.writeRC(0,i,buffer);
+    }
+    ScanCounter++;
+    return true;
+}
+
+bool Scan::isEnd(void){
+    //return true
+    return true;
+}
+
+/*******************************Filter*************************************/
+
+/*******************************Project*************************************/
 bool Project::init(void){
     //alloc memory and init its child
     if(TempResult.init(TempResultType,TempResultCols) <= 0)
@@ -116,10 +146,14 @@ bool Project::init(void){
 }
 
 bool Project::getNext(ResultTable& ParentTempResult){
-    ChildOperator->getNext(TempResult);
+    //get next
+    if(ChildOperator->getNext(TempResult) != true)
+        return false;
     for(int i = 0; i < ProjectNumber; i++){
-        ParentTempResult.writeRC()
+        char * CopyData = TempResult.getRC(0,ProjectCol[i]);
+        ParentTempResult.writeRC(0,i,CopyData);
     }
+    return true;
 }
 
 bool Project::isEnd(void){
@@ -130,3 +164,11 @@ bool Project::isEnd(void){
         return false;
     return true;
 }
+
+
+
+
+/*******************************GroupBy*************************************/
+
+
+/*******************************OrderBy*************************************/
