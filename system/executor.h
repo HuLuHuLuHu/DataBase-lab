@@ -172,7 +172,7 @@ class Scan : public Operator{
     
     public:
         /** constrcut method of class Project. */
-        Project(char * TableName,int TempResultCols){
+        Scan(char * TableName,int TempResultCols){
         	this->TableName = TableName;
         	this->TempResultCols = TempResultCols;
         };
@@ -204,18 +204,22 @@ class Scan : public Operator{
 /** definition of class Filter Operator. */
 class Filter : public Operator {
 	    private:
-        int ProjectNumber;            /**< total number of cols to project          */
-        int * ProjectCol;             /**< id of cols to be projected               */
+        int FilterCol;                /**< which Col to Filter                      */
+        CompareMethod compare_method; /**< compare method                           */
+        int FilterCounter = 0;        /**< Filter counter                           */
+        char * CompareValue;          /**< compare value                            */
         Operator * ChildOperator;     /**< the child operator of this operator      */
         ResultTable TempResult;       /**< a temporary table to store middle result */
         int TempResultCols;           /**< col number of TempResult                 */
         BasicType ** TempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+        Filter(int FilterCol,CompareMethod compare_method,
+                char * CompareValue,Operator * ChildOperator,
                 int TempResultCols,BasicType ** TempResultType){
-            this->ProjectNumber = ProjectNumber;
-            this->ProjectCol = ProjectCol;
+            this->FilterCol = FilterCol;
+            this->compare_method = compare_method;
+            this->CompareValue = CompareValue;
             this->ChildOperator = ChildOperator;
             this->TempResultCols = TempResultCols;
             this->TempResultType = TempResultType;
@@ -291,21 +295,36 @@ class Project : public Operator{
 /** definetion of class Join Operator. */
 class Join : public Operator {
 	    private:
-        int ProjectNumber;            /**< total number of cols to project          */
-        int * ProjectCol;             /**< id of cols to be projected               */
-        Operator * ChildOperator;     /**< the child operator of this operator      */
-        ResultTable TempResult;       /**< a temporary table to store middle result */
-        int TempResultCols;           /**< col number of TempResult                 */
-        BasicType ** TempResultType;  /**< datatype of TempResult                   */
+        int LJoinCol;                  /**< which col to join in LTable              */
+        int RJoinCol;                  /**< which col to join in RTable              */
+        ResultTable LTable;            /**< LTable to store all result               */
+        ResultTable RTable;            /**< RTable to store all result               */
+        char * LData;                  /**< data pointer                             */
+        char * RData;                  /**< data pointer                             */
+        int LCounter = 0;              /**< counter                                  */
+        int RCounter = 0;              /**< counter                                  */
+        Operator * LChildOperator;     /**< the child operator of this operator      */
+        Operator * RChildOperator;     /**< the child operator of this operator      */
+        ResultTable LTempResult;       /**< a temporary table to store middle result */
+        ResultTable RTempResult;       /**< a temporary table to store middle result */
+        int LTempResultCols;           /**< col number of TempResult                 */
+        int RTempResultCols;           /**< col number of TempResult                 */
+        BasicType ** LTempResultType;  /**< datatype of TempResult                   */
+        BasicType ** RTempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
-                int TempResultCols,BasicType ** TempResultType){
-            this->ProjectNumber = ProjectNumber;
-            this->ProjectCol = ProjectCol;
-            this->ChildOperator = ChildOperator;
-            this->TempResultCols = TempResultCols;
-            this->TempResultType = TempResultType;
+        Join(int LJoinCol,Operator * LChildOperator,
+                int LTempResultCols,BasicType ** LTempResultType,
+                int RJoinCol,Operator * RChildOperator,
+                int RTempResultCols,BasicType ** RTempResultType){
+            this->LJoinCol = LJoinCol;
+            this->LChildOperator = LChildOperator;
+            this->LTempResultCols = LTempResultCols;
+            this->LTempResultType = LTempResultType;
+            this->RJoinCol = RJoinCol;
+            this->RChildOperator = RChildOperator;
+            this->RTempResultCols = RTempResultCols;
+            this->RTempResultType = RTempResultType;
         };
 
         /**
@@ -330,26 +349,19 @@ class Join : public Operator {
         */
         bool isEnd();
 
+
 };
 
 /** definition of class GroupBy Operator. */
 class GroupBy : public Operator {
 	    private:
-        int ProjectNumber;            /**< total number of cols to project          */
-        int * ProjectCol;             /**< id of cols to be projected               */
         Operator * ChildOperator;     /**< the child operator of this operator      */
         ResultTable TempResult;       /**< a temporary table to store middle result */
         int TempResultCols;           /**< col number of TempResult                 */
         BasicType ** TempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
-                int TempResultCols,BasicType ** TempResultType){
-            this->ProjectNumber = ProjectNumber;
-            this->ProjectCol = ProjectCol;
-            this->ChildOperator = ChildOperator;
-            this->TempResultCols = TempResultCols;
-            this->TempResultType = TempResultType;
+        GroupBy(){
         };
 
         /**
@@ -379,18 +391,18 @@ class GroupBy : public Operator {
 /** definition of class OrderBy Operator. */
 class OrderBy : public Operator{
     private:
-        int ProjectNumber;            /**< total number of cols to project          */
-        int * ProjectCol;             /**< id of cols to be projected               */
+        int OrderCol;
+        CompareMethod compare_method;
         Operator * ChildOperator;     /**< the child operator of this operator      */
         ResultTable TempResult;       /**< a temporary table to store middle result */
         int TempResultCols;           /**< col number of TempResult                 */
         BasicType ** TempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-        Project(int ProjectNumber,int * ProjectCol,Operator * ChildOperator,
+        OrderBy(int OrderCol,CompareMethod compare_method,Operator * ChildOperator,
                 int TempResultCols,BasicType ** TempResultType){
-            this->ProjectNumber = ProjectNumber;
-            this->ProjectCol = ProjectCol;
+            this->OrderCol = OrderCol;
+            this->compare_method = compare_method;
             this->ChildOperator = ChildOperator;
             this->TempResultCols = TempResultCols;
             this->TempResultType = TempResultType;
@@ -417,5 +429,15 @@ class OrderBy : public Operator{
         * @retval < 0 isEnd failed
         */
         bool isEnd();
+    protected:
+        ResultTable OrderTable;
+        int OrderNumber = 0;
+        int OrderCounter = 0;
+        struct OrderPair{
+            char * OrderData;
+            int RowRank;
+        };
+        struct OrderPair * OrderArray;
+        int compare(void * x,void * y);
 };
 #endif
