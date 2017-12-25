@@ -109,7 +109,7 @@ int ResultTable::shut (void) {
 
 /*******************************Scan*************************************/
 bool Scan::init(void){
-    //get the table
+    /* get the table pointer */
     ScanTable = (Table *)getObjByName(TableName);
     if(ScanTable == NULL)
         return false;
@@ -117,7 +117,7 @@ bool Scan::init(void){
 }
 
 bool Scan::getNext(ResultTable& ParentTempResult){
-    //get next tuple from the table
+    /* get next tuple from the table */
     for(int i = 0; i < TempResultCols; i++){
         if(ScanTable->selectCol(ScanCounter,i,buffer) != true)
             return false;
@@ -129,13 +129,13 @@ bool Scan::getNext(ResultTable& ParentTempResult){
 }
 
 bool Scan::isEnd(void){
-    //return true
+    /* return true */
     return true;
 }
 
 /*******************************Filter*************************************/
 bool Filter::init(void){
-    //init its child and allc memory
+    /* init its child and allc memory */
     if(TempResult.init(TempResultType,TempResultCols) <= 0)
         return false;
     if(ChildOperator->init() != true)
@@ -144,7 +144,7 @@ bool Filter::init(void){
 }
 
 bool Filter::getNext(ResultTable& ParentTempResult){
-    //get next result which satisfy the filter
+    /* get next result which satisfy the filter */
     while(ChildOperator->getNext(ResultTable)){
         if(/* Filter Success */){
             for(int i = 0; i < TempResultCols; i++){
@@ -158,7 +158,7 @@ bool Filter::getNext(ResultTable& ParentTempResult){
 }
 
 bool Filter::isEnd(void){
-    //free memory and its child
+    /* free memory and its child */
     if(TempResult.shut() != 0)
         return false;
     if(ChildOperator->isEnd != true)
@@ -168,7 +168,7 @@ bool Filter::isEnd(void){
 
 /*******************************Project*************************************/
 bool Project::init(void){
-    //alloc memory and init its child
+    /* alloc memory and init its child */
     if(TempResult.init(TempResultType,TempResultCols) <= 0)
         return false;
     if(ChildOperator->init() != true)
@@ -177,7 +177,7 @@ bool Project::init(void){
 }
 
 bool Project::getNext(ResultTable& ParentTempResult){
-    //get next
+    /* get next result of Project */
     if(ChildOperator->getNext(TempResult) != true)
         return false;
     for(int i = 0; i < ProjectNumber; i++){
@@ -188,7 +188,7 @@ bool Project::getNext(ResultTable& ParentTempResult){
 }
 
 bool Project::isEnd(void){
-    //free memory and its child
+    /* free memory and its child */
     if(TempResult.shut() != 0)
         return false;
     if(ChildOperator->isEnd != true)
@@ -198,7 +198,7 @@ bool Project::isEnd(void){
 
 /*******************************Join**************************************/
 bool Join::init(void){
-    //init its childs & allc memory & get all the data
+    /* init its childs & allc memory & get all the data */
     if(LTempResult.init(LTempResultType,LTempResultCols) <= 0)
         return false;
     if(LTable.init(LTempResultType,LTempResultCols) <= 0)
@@ -211,7 +211,7 @@ bool Join::init(void){
         return false;
     if(RChildOperator->init() != true)
         return false;
-
+    /* get all the data */
     for(int i = 0; LChildOperator->getNext(LTempResult); i++){
         for(int j = 0; j < LTempResultCols; j++){
             char * CopyData = LTempResult.getRC(0,j);
@@ -228,7 +228,7 @@ bool Join::init(void){
 }
 
 bool Join::getNext(ResultTable& ParentTempResult){
-    //user nest loop for a simple implement
+    /* user nest loop for a simple implement */
     while((LData = LTable.getRC(LCounter,LJoinCol)) != NULL;){
         while((RData = RTable.getRC(RCounter,RJoinCol)) != NULL;){
             /* if equal */
@@ -253,7 +253,7 @@ bool Join::getNext(ResultTable& ParentTempResult){
 }
 
 bool Join::isEnd(void){
-    //free memory and its child
+    /* free memory and its child */
     if(LTempResult.shut() != 0)
         return false;
     if(LTable.shut() != 0)
@@ -271,11 +271,22 @@ bool Join::isEnd(void){
 }
 
 /*******************************GroupBy*************************************/
+bool GroupBy::init(void){
+
+}
+
+bool GroupBy::getNext(ResultTable& ParentTempResult){
+
+}
+
+bool GroupBy::isEnd(void){
+
+}
 
 
 /*******************************OrderBy*************************************/
 bool OrderBy::init(void){
-    //alloc memory & init its child & get all result & sort
+    /* alloc memory & init its child & get all result & sort */
     if(TempResult.init(TempResultType,TempResultCols) <= 0)
         return false;
     if(OrderTable.init(TempResultType,TempResultCols) <= 0)
@@ -283,12 +294,15 @@ bool OrderBy::init(void){
     if(ChildOperator->init() != true)
         return false;
 
+    /* get all the data */
     for(int i = 0; ChildOperator->getNext(TempResult); i++,OrderNumber++){
         for(int j = 0; j < TempResultCols; j++){
             char * CopyData = TempResult.getRC(0,j);
             OrderTable.writeRC(i,j,CopyData);
         }
     }
+
+    /* sort */
     OrderArray = (struct OrderPair *)malloc(sizeof(struct OrderPair) * OrderNumber);
     for(int i = 0 ; i < OrderNumber; i++){
         OrderArray[i].OrderData = OrderTable.getRC(i,OrderCol);
@@ -299,6 +313,7 @@ bool OrderBy::init(void){
 }
 
 bool OrderBy::getNext(ResultTable& ParentTempResult){
+    /* get next result of OrderBy */
     if(OrderCounter == OrderNumber)
         return false;
     for(int i = 0; i < TempResultCols; i++)
@@ -311,7 +326,7 @@ bool OrderBy::getNext(ResultTable& ParentTempResult){
 }
 
 bool OrderBy::isEnd(void){
-    //free memory and its child
+    /* free memory and its child */
     if(TempResult.shut() != 0)
         return false;
     if(OrderTable.shut() != 0)
@@ -322,6 +337,8 @@ bool OrderBy::isEnd(void){
     return true;
 }
 
-bool OrderBy::compare(void * x,void * y){
-    
+int OrderBy::compare(void * x,void * y){
+    struct OrderPair * p1 = (struct OrderPair *)x;
+    struct OrderPair * p2 = (struct OrderPair *)y;
+    return TempResultType[OrderCol]->cmpLT(p1->OrderData,p2->OrderData);
 }
