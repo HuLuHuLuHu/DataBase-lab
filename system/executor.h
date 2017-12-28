@@ -247,6 +247,8 @@ class Filter : public Operator {
         */
         bool isEnd();
 
+        bool compare(CompareMethod method,int col,char* value);
+
     protected:
         int FilterCounter = 0;        /**< Filter counter                           */
         ResultTable TempResult;       /**< a temporary table to store middle result */
@@ -361,10 +363,20 @@ class Join : public Operator {
 /** definition of class GroupBy Operator. */
 class GroupBy : public Operator {
 	    private:
-        
+        int Group_Number;         /**< number of colum need to group by      */
+	    int *Group_Col;           /**< id of colum need to be group by   */
+        Operator * ChildOperator;     /**< the child operator of this operator      */
+        int TempResultCols;           /**< col number of TempResult                 */
+        BasicType ** TempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-        GroupBy(){
+         GroupBy(int Group_Number, int *Group_Col,
+                Operator * ChildOperator, int TempResultCols,BasicType ** TempResultType){
+            this->Group_Number = Group_Number;
+            this->Group_Col = Group_Col;
+            this->ChildOperator = ChildOperator;
+            this->TempResultCols = TempResultCols;
+            this->TempResultType = TempResultType;
         };
 
         /**
@@ -388,6 +400,12 @@ class GroupBy : public Operator {
         * @retval < 0 isEnd failed
         */
         bool isEnd();
+
+    protected:
+    	ResultTable  TempResult; 
+    	ResultTable  GroupByTable;
+    	int counter = 0;
+    	int Reqcounter = 0;
 
 };
 
