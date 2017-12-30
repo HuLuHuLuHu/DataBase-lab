@@ -247,7 +247,7 @@ class Filter : public Operator {
         */
         bool isEnd();
 
-        bool compare(CompareMethod method,int col,char* value);
+        bool compareResult(void *col_data,void* value,CompareMethod compare_method);
 
     protected:
         int FilterCounter = 0;        /**< Filter counter                           */
