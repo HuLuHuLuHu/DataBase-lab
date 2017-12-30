@@ -147,7 +147,10 @@ bool Filter::init(void){
 bool Filter::getNext(ResultTable& ParentTempResult){
 	/* get next result which satisfy the filter */
 	while(ChildOperator->getNext(ResultTable)){
-		if(compare(compare_method,FilterCol,CompareValue)){ //尚未完全解决。
+		BasicType compare(TempResultType[FilterCol]->b_type_code,TempResultType[FilterCol]->b_type_size);
+		void *changed;
+		compare.formatBin(changed,CompareValue);
+		if(compareResult(ResultTable.getRC(0,FilterCol),changed,compare_method)){ 
 			for(int i = 0; i < TempResultCols; i++){
 				char * CopyData = TempResult.getRC(0,i);
 				ParentTempResult.writeRC(0,i,CopyData);
@@ -167,6 +170,25 @@ bool Filter::isEnd(void){
 	return true;
 }
 
+bool Filter::compareResult(void *col_data,void *value,CompareMethod compare_method){
+	switch(compare_method){
+	case LT:
+		return compare.cmpLT(col_data,value);
+	case LE:
+		return compare.cmpLE(col_data,value);
+	case EQ:
+		return compare.cmpEQ(col_data,value);
+	case NE:
+		return !(compare.cmpEQ(col_data,value));
+	case GT:
+		return compare.cmpGT(col_data,value);
+	case GE:
+		return compare.cmpGE(col_data,calue);
+	default:
+		return -1;//ERROR 
+	}
+
+}
 
 /*******************************Project*************************************/
 bool Project::init(void){
