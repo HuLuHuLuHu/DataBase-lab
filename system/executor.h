@@ -44,7 +44,11 @@ struct RequestColumn {
     char name[128];    /**< name of column */
     AggrerateMethod aggrerate_method;  /** aggrerate method, could be NONE_AM  */
 };
-
+/** definition of Aggrerate column. */
+struct AggrerateColumn{
+	int id;
+	AggrerateMethod aggrerate_method;
+}
 /** definition of request table. */
 struct RequestTable {
     char name[128];    /** name of table */
@@ -365,15 +369,19 @@ class GroupBy : public Operator {
 	    private:
         int Group_Number;         /**< number of colum need to group by      */
 	    int *Group_Col;           /**< id of colum need to be group by   */
+	    int aggrerate_Number;	  /**< number of colum need to aggrerate*/
+	  	AggrerateColumn *aggrerate_col; /**< id of cololum need to be aggrerate and aggrerate mechod*/
         Operator * ChildOperator;     /**< the child operator of this operator      */
         int TempResultCols;           /**< col number of TempResult                 */
         BasicType ** TempResultType;  /**< datatype of TempResult                   */
     public:
         /** constrcut method of class Project. */
-         GroupBy(int Group_Number, int *Group_Col,
+         GroupBy(int Group_Number, int *Group_Col, int aggrerate_Number,RequestColumn *aggrerate_col, 
                 Operator * ChildOperator, int TempResultCols,BasicType ** TempResultType){
             this->Group_Number = Group_Number;
             this->Group_Col = Group_Col;
+            this->aggrerate_Number = aggrerate_Number;
+            this->aggrerate_col = aggrerate_col;
             this->ChildOperator = ChildOperator;
             this->TempResultCols = TempResultCols;
             this->TempResultType = TempResultType;
@@ -401,11 +409,16 @@ class GroupBy : public Operator {
         */
         bool isEnd();
 
+
     protected:
     	ResultTable  TempResult; 
     	ResultTable  GroupByTable;
     	int counter = 0;
     	int Reqcounter = 0;
+    	void do_count(bool find,int array);
+    	void do_max(int agg_col, int array, int col);
+    	void do_min(int agg_col, int array, int col);
+    	void do_add(int agg_col, int array, int col);
 
 };
 

@@ -307,6 +307,9 @@ bool GroupBy::init(void){
 	return true;
 	TypeCharN Type;
 	char data[Group_Number];
+	int  col_count = Group_Number;
+	int  avg_c = 0;
+	int  avg[4];
 //get all the data
 	for(int i = 0; ChildOperator->getNext(TempResult); i++){
 		bool find = TRUE;
@@ -330,19 +333,45 @@ bool GroupBy::init(void){
 		    	break;
 		} // 查找完成
 
-		if(find){
-			int* number = GroupByTable.getRC(m,Group_Number);
-			*number ++;//记录数量+1
-			}
-		else{
-			for(int k=0;k<Group_Number;k++)
-			GroupByTable.writeRC(counter,k,data[k]);
-			int *one;
-			*one = 1;
-			GroupByTable.writeRC(counter,Group_Number,one);
-			counter ++; // 行数+1
-			}//插入新的一行
+		do_count(find,m);
+		for(int c=0;c<aggrerate_Number;c++){
+			col_count++;
+			switch(aggrerate_col[c].aggrerate_method){
+				case COUNT:
+				break;
 
+				case SUM:
+				do_add(aggrerate_col[c].id,m,col_count);
+				break;
+
+				case MIN:
+				do_min(aggrerate_col[c].id,m,col_count);
+				break;
+
+				case MAX:
+				do_max(aggrerate_col[c].id,m,col_count);
+				break;
+
+				case AVG:
+				do_add(aggrerate_col[c].id,m,col_count);
+				avg_c++;
+				avg[c-1] = col_count;
+				break;
+				
+				default:
+				break;
+				}
+			}
+		}
+		//deal with avg
+		int* avg_temp;
+		int* avg_count;
+		for(int j=0;j<counter;j++){
+			avg_count = GroupByTable.getRC(j,Group_Number);
+			for(int a=0;a<avg_c;a++){
+				avg_temp = GroupByTable.getRC(j,avg[avg_c]);
+				*avg_temp /= *avg_count;
+			}
 		}
 		return TRUE;
 	}
@@ -374,6 +403,43 @@ bool GroupBy::isEnd(void){
 	return true;
 
 }
+
+void GroupBy::do_count(bool find, int array){
+	    if(find){
+			int* number = GroupByTable.getRC(array,Group_Number);
+			*number ++;//记录数量+1
+			}
+		else{
+			for(int k=0;k<Group_Number;k++)
+			GroupByTable.writeRC(counter,k,data[k]);
+			int *one;
+			*one = 1;
+			GroupByTable.writeRC(counter,Group_Number,one);
+			counter ++; // 行数+1
+			}//插入新的一行
+
+}
+
+void GroupBy::do_max(int agg_col, int array, int col){
+			int* number = GroupByTable.getRC(array,col);
+			int* temp = TempResult.getRC(0,agg_col);
+			if(*temp > *number)
+				GroupByTable.writeRC(array,col,temp);
+}
+
+void GroupBy::do_min(int agg_col, int array, int col){
+			int* number = GroupByTable.getRC(array,col);
+			int* temp = TempResult.getRC(0,agg_col);
+			if(*temp < *number)
+				GroupByTable.writeRC(array,col,temp);
+}
+
+void GroupBy::do_add(int agg_col, int array, int col){
+			int* number = GroupByTable.getRC(array,col);
+			int* temp = TempResult.getRC(0,agg_col);
+			*number += *temp;
+}
+
 
 
 /*******************************OrderBy*************************************/
