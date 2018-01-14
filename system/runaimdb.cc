@@ -5,26 +5,31 @@
  *
  * @section DESCRIPTION
  *
- * the main entrance of AIMDB 
+ * the main entrance of AIMDB
  *
  */
-
 #include "global.h"
 #include "executor.h"
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <vector>
 
 const char *table_name[] = {
-    "example_table_1",
-    "example_table_2"
+    "part",
+    "supplier",
+    "partsupp",
+    "customer",
+    "nation",
+    "lineitem",
+    "region",
+    "orders"
 };
 
 int print_flag = false;
 int load_schema(const char *filename);
 int load_data(const char *tablename[],const char *data_dir, int number);
 int test(void);
+int testOne (int which);
 
 int main(int argc, char *argv[])
 {
@@ -44,7 +49,7 @@ int main(int argc, char *argv[])
         printf ("[runaimdb][ERROR][main]: load schema error!\n");
         return -2;
     }
-    if (load_data(table_name,argv[2],2)) {
+    if (load_data(table_name,argv[2],8)) {
         printf ("[runaimdb][ERROR][main]: load data error!\n");
         return -3;
     }
@@ -59,56 +64,6 @@ int main(int argc, char *argv[])
         printf ("finish all test!\n");
 
     return 0;
-
-}
-
-int test(void)
-{
-    // here we run some test with random data
-    Executor executor;
-    //------------------------------------------------------------------------
-   
-    /*
-       example query:
-       select example_column_3,example_column_5,example_column_14
-       from example_table_1,exampel_table_2
-       where example_column_4 == example_column_12
-     */
-    SelectQuery query = { 1,  // database_id
-                          3,  // select_number
-                          {   // select_column
-                            { "example_column_3", NONE_AM  },
-                            { "example_column_5", NONE_AM  },
-                            { "example_column_14",NONE_AM  },
-                            {}   
-                          },
-                          2,  // from_number
-                          {   // from_table
-                              "example_table_1","example_table_2","",""
-                          },
-                          {     // where
-                            1,
-                            {   //conditions 
-                              { {"example_column_4",NONE_AM},LINK,"example_column_12"},
-                              {},
-                              {},
-                              {}
-                            }
-                          },
-                          0,  // groupby_number
-                          {}, // greoup_by
-                          {}, // having
-                          0,  // orderby_number
-                          {}  // orderby
-                        };
-    ResultTable result;
-    int stat = executor.exec(&query, &result);
-    while (stat > 0) {
-        result.print ();
-        stat = executor.exec(NULL, &result);
-    }
-    
-    return 0;
 }
 
 //----------------------------------------------------------------------------
@@ -116,9 +71,9 @@ int test(void)
  * load a database schema from a txt file.
  * @param filename name of schema file, the schema must meet the folowing condition
  * @retval 0  success
- * #retval <0 faliure 
+ * #retval <0 faliure
  *
- * schema format 
+ * schema format
  * (1) split by one '\t', a row ends with '\n'
  * (2) claim Database,Table,column,index in order
  * (3) no empty row
@@ -210,6 +165,7 @@ int load_schema(const char *filename)
                 len = atoi(row[3]);
             } else {
                 printf("[load_schema][ERROR]: column type error!\n");
+                printf("error: %s\n", row[1]);
                 return -5;
             }
             g_catalog.createColumn((const char *) row[1], type, len,
@@ -252,7 +208,7 @@ int load_schema(const char *filename)
  * @retval <0 faliure
  *
  * naming rule of data files
- * 
+ *
  * each data file should be named "table_name.tab" and meet the following requirement
  *
  * data format
@@ -293,6 +249,7 @@ int load_data(const char *tablename[],const char *data_dir, int number)
 
         char buffer[2048];
         char *columns[colnum];
+        void *columnsvoid[colnum];
         char data[colnum][1024];
         while (fgets(buffer, 2048, fp)) {
             // insert table
@@ -330,14 +287,344 @@ int load_data(const char *tablename[],const char *data_dir, int number)
             for (int ii = 0; ii < indexnum; ii++) {
                 int indexsz = index[ii]->getIKey().getKey().size();
                 for (int jj = 0; jj < indexsz; jj++)
-                    columns[jj] =
+                    columnsvoid[jj] =
                         data[tp->getColumnRank
                              (index[ii]->getIKey().getKey()[jj])];
-                index[ii]->insert(columns, ptr);
+                index[ii]->insert(columnsvoid, ptr);
             }
         }
         if (print_flag)
             tp->printData();
     }
+    return 0;
+}
+
+///--------------------------------tpch test-----------------------------------------
+
+ SelectQuery querys[22] = {
+    /** TQ-1 select 1 列，1个filter, 小数据集
+    select n_name
+    from supplier
+    where n_nationkey = 18
+    **/
+    {
+        1,
+        1,
+        {
+            {"s_name",NONE_AM}
+        },
+        1,
+        {
+            "supplier"
+        },
+        {
+            1,
+            {
+                { {"s_nationkey",NONE_AM},EQ,"18" }
+            }
+        },
+        0,{},{},0,{}
+    },
+    /** TQ-2 select 2 列， 2个filter, 小数据集，其中一个filter列上有index
+             (index: ps_suppkey)
+    select ps_partkey,availqty
+    from partsupp
+    where ps_suppkey = 6 and ps_availqty < 8000
+    **/
+    {
+        1,
+        2,
+        {
+            {"ps_partkey",NONE_AM},
+            {"ps_availqty",NONE_AM}
+        },
+        1,
+        {
+            "partsupp"
+        },
+        {
+            2,
+            {
+                { {"ps_suppkey",NONE_AM},EQ,"6" },
+                { {"ps_availqty",NONE_AM},LT,"8000" }
+            }
+        },
+        0,{},{},0,{}
+    },
+    /** TQ-3
+    **/
+    {0},
+    /** TQ-4
+    **/
+    {0},
+    /** TQ-5
+    **/
+    {0},
+    /** TQ-6 2个表join, 没有filter条件，没有index, 输出2列（每个表各选1列），小数据集
+    select c_name,o_totalprice
+    from customer,orders
+    where c_custkey = o_custkey
+    **/
+    {
+        1,
+        2,
+        {
+            {"c_name",NONE_AM},
+            {"o_totalprice",NONE_AM}
+        },
+        2,
+        {
+            "customer",
+            "orders"
+        },
+        {
+            1,
+            {
+                { {"c_custkey",NONE_AM},LINK,"o_custkey" }
+            }
+        },
+        0,{},{},0,{}
+    },
+    /** TQ-7 2个表join, 没有filter条件，有index, 输出2列（每个表各选1列），小数据集
+             (index: r_regionkey)
+    select c_name,o_totalprice
+    from customer,orders
+    where c_custkey = o_custkey
+    **/
+    {
+        1,
+        2,
+        {
+            {"n_name",NONE_AM},
+            {"r_name",NONE_AM}
+        },
+        2,
+        {
+            "nation",
+            "region"
+        },
+        {
+            1,
+            {
+                { {"n_regionkey",NONE_AM},LINK,"r_regionkey" }
+            }
+        },
+        0,{},{},0,{}
+    },
+    /** TQ-8
+    **/
+    {0},
+    /** TQ-9
+    **/
+    {0},
+    /** TQ-10
+    **/
+    {0},
+    /** TQ-11 2个表join, 各有1个filter条件，没有index, 输出2列（每个表各选1列），小数据集
+    select c_name,o_totalprice
+    from customer,orders
+    where c_custkey = orderd.custkey and c_nationkey = 18 and totalprice >20000
+    **/
+    {
+        1,
+        2,
+        {
+            {"c_name",NONE_AM},
+            {"o_totalprice",NONE_AM}
+        },
+        2,
+        {
+            "customer",
+            "orders"
+        },
+        {
+            3,
+            {
+                { {"c_custkey",NONE_AM},LINK,"o_custkey" },
+                { {"c_nationkey",NONE_AM},EQ,"18" },
+                { {"o_totalprice",NONE_AM},GT,"20000" }
+            }
+        },
+        0,{},{},0,{}
+    },
+    /** TQ-12
+    **/
+    {0},
+    /** TQ-13
+    **/
+    {0},
+    /** TQ-14
+    **/
+    {0},
+    /** TQ-15
+    **/
+    {0},
+    /** TQ-16 TQ2基础上，加一个group by key, 一个aggregation，小数据集
+    select ps_partkey,ps_availqty
+    from partsupp
+    where ps_suppkey = 6 and ps_availqty < 8000
+    group by ps_partkey
+    **/
+    {
+        1,
+        2,
+        {
+            {"ps_partkey",NONE_AM},
+            {"ps_availqty",SUM}
+        },
+        1,
+        {
+            "partsupp"
+        },
+        {
+            2,
+            {
+                { {"ps_suppkey",NONE_AM},EQ,"6" },
+                { {"ps_supplycost",SUM},LT,"2000" }
+            }
+        },
+        1,
+        {
+            {"ps_partkey",NONE_AM}
+        },
+        {0},0,{}
+    },
+    /** TQ-17
+    **/
+    {0},
+    /** TQ-18 TQ6基础上，加一个group by key, 2个aggregation，小数据集
+    select c_name,SUM(totalprice),MAX(totalprice)
+    from customer,orders
+    where c_custkey = orderd.custkey
+    group by c_custkey
+    **/
+    {
+        1,
+        3,
+        {
+            {"c_name",NONE_AM},
+            {"o_totalprice",SUM},
+            {"o_totalprice",MAX}
+        },
+        2,
+        {
+            "customer",
+            "orders"
+        },
+        {
+            1,
+            {
+                { {"c_custkey",NONE_AM},LINK,"o_custkey" }
+            }
+        },
+        1,
+        {
+            {"c_name",NONE_AM}
+        },
+        {0},0,{}
+    },
+    /** TQ-19
+    **/
+    {0},
+    /** TQ-20
+    **/
+    {0},
+    /** TQ-21 TQ2基础上，按1个输出列进行排序，小数据集
+    **/
+    {
+        1,
+        2,
+        {
+            {"ps_partkey",NONE_AM},
+            {"ps_availqty",NONE_AM}
+        },
+        1,
+        {
+            "partsupp"
+        },
+        {
+            2,
+            {
+                { {"ps_suppkey",NONE_AM},EQ,"6" },
+                { {"ps_availqty",NONE_AM},LT,"8000" }
+            }
+        },
+        0,{},{},
+        1,
+        {
+            {"ps_availqty",NONE_AM}
+        }
+    },
+    /** TQ-22
+    **/
+    {0}
+};
+
+int test (void) {
+    const int tq_num[8] = {1,2,6,7,11,16,18,21};
+    for (int ii=0; ii< 8; ii++) {
+            testOne(tq_num[ii]);
+    }
+    return 0;
+}
+
+int testOne (int which)
+{
+    // here we run some test with random data
+    char file_name[1024];
+    sprintf (file_name,"./TQ%d.tab",which);
+    FILE *fp = fopen (file_name,"w");
+    if (fp == NULL) {
+        if (print_flag) {
+            printf ("in testOne: file_name error!\n");
+            return 0;
+        }
+    }
+    Executor executor;
+/*
+    //  example query:
+    //  select example_column_3,example_column_5,example_column_14
+    //  from example_table_1,exampel_table_2
+    //  where example_column_4 == example_column_12
+    SelectQuery query = { 1,  // database_id
+                          3,  // select_number
+                          {   // select_column
+                            { "example_column_3", NONE_AM  },
+                            { "example_column_5", NONE_AM  },
+                            { "example_column_14",NONE_AM  },
+                            {}
+                          },
+                          2,  // from_number
+                          {   // from_table
+                              "example_table_1","example_table_2","",""
+                          },
+                          {     // where
+                            1,
+                            {   //conditions
+                              { {"exampŝle_column_4",NONE_AM},LINK,"example_column_12"},
+                              {},
+                              {},
+                              {}
+                            }
+                          },
+                          0,  // groupby_number
+                          {}, // greoup_by
+                          {}, // having
+                          0,  // orderby_number
+                          {}  // orderby
+                        };
+*/
+    if (querys[which-1].database_id == 0) {
+        printf ("current query not provided! and query should range in 1-21!\n");
+        return -1;
+    }
+    ResultTable result;
+    int stat = executor.exec(&querys[which-1], result);
+    while (stat > 0) {
+  //     result.print ();
+        result.dump  (fp);
+        stat = executor.exec(NULL, result);
+    }
+    fclose (fp);
     return 0;
 }

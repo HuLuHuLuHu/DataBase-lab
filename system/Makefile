@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -Wall -g -O2 -std=c++11 
+CFLAGS = -Wall -g -O0 -std=c++11
 
 INCLUDE = -I.
 CFLAGS += $(INCLUDE)

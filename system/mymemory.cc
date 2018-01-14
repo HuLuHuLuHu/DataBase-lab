@@ -52,6 +52,7 @@ int64_t Memory::alloc(char *&p, int64_t size)
 {
     // printf ("alloc size: %ld\n", size);
     if (size < m_mins) {
+	printf("m_mins is %d, size is %d\n",m_mins,size);
         printf("[Memory][ERROR][alloc]: size is less than m_mins! -2\n");
         return -2;
     }

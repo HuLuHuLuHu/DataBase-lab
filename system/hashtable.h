@@ -71,10 +71,9 @@ class HashTable {
     void *allocate(int size);                     /**< mymemory alloc interface like malloc */
     void  free(void *mem);                        /**< mymemory free interface like free in stdlib */
     int size_to_slot(int array_size);             /**< find the offset in free_header arrray to get suitable free memory used in this HashTable */
-    
+
   public:
-    /**
-     * constructor.
+    /**     * constructor.
      * @param estimatedNumDistinctKeys estimated number of distinct keys,pre-knowledge for this HashTable usage
      * @param estimatedDupPerKey       estimated number of dupicate keys in average,pre-knowledge for this HashTable usage
      * @param num_partitions           leave it 0, unuseable

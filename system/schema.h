@@ -262,7 +262,7 @@ class Table:public Object {
     TableType t_type;     /**< table type */
     std::vector < int64_t > t_columns;  /**< vector of columns' identifier */
     std::vector < int64_t > t_index;    /**< vector of index's identifier */
-
+    BasicType **tc_type;
   public:
     /**
      * get table type.
@@ -287,6 +287,19 @@ class Table:public Object {
     std::vector < int64_t > &getIndexs(void) {
         return t_index;
     }
+
+    BasicType **get_tb_type(void);
+    
+   /* BasicType **get_tb_type(void){
+        int i = t_columns.size();
+        int j;
+
+        tc_type = new BasicType *[i];
+        for(j=0;j<i;j++){
+            tc_type[j] = ((Column *)g_catalog.getObjById(t_columns[j]))->getDataType;
+        }
+        return tc_type;
+    }*/
     /**
      * get column rank in this table
      * @param  c_id column identifier
